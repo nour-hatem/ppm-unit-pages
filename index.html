@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Unit maintenance</title>
+<style>
+  :root {
+    --bg: #EAF2FB; --card: #F7FAFE; --ink: #0B2545; --muted: #3D5A80; --line: #B8CDE6;
+    --primary: #1F5FA8; --primary-ink: #EAF2FB; --soft: #D6E4F5; --soft-ink: #12335C;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0B1F3A; --card: #102B4C; --ink: #D6E4F5; --muted: #9DB8D9; --line: #24456F;
+      --primary: #4C8FD6; --primary-ink: #0B1F3A; --soft: #1B3A63; --soft-ink: #D6E4F5;
+    }
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.45; }
+  main { max-width: 520px; margin: 0 auto; padding: 20px 16px 32px; }
+  .brand { margin: 0 0 14px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+  dl { margin: 0 0 16px; display: grid; grid-template-columns: 110px 1fr; gap: 8px 10px; font-size: 15px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-weight: 600; word-break: break-word; }
+  .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--soft); color: var(--soft-ink); font-weight: 700; }
+  label { display: block; margin: 14px 0 6px; font-size: 14px; color: var(--muted); }
+  select { width: 100%; min-height: 48px; padding: 0 12px; font-size: 16px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  .hint { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+  .btn { display: block; width: 100%; min-height: 52px; margin-top: 12px; padding: 14px 16px; text-align: center; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 12px; border: 2px solid var(--primary); }
+  .btn.primary { background: var(--primary); color: var(--primary-ink); }
+  .btn.secondary { background: transparent; color: var(--primary); }
+  .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+  .note { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+  .error h1 { font-size: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">Al-Fursan maintenance</p>
+  <div id="app" class="card" aria-live="polite"><p class="sub">Loading</p></div>
+</main>
+<script src="data.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var T = {
+    notFoundTitle: 'Unit not found',
+    notFoundBody: 'Check that you scanned the label on the unit. If the problem continues, tell your supervisor.',
+    unit: 'Unit', type: 'Type', location: 'Location', model: 'Model', room: 'Room',
+    thisMonth: 'This month', planned: 'Planned day', due: 'Checklists due',
+    noPlan: 'No visit is planned for this month',
+    visitLabel: 'Visit type',
+    visitHint: 'Use the suggested type. Change it only if your supervisor tells you to.',
+    start: 'Start scheduled maintenance',
+    fault: 'Report a fault or repair',
+    notConnected: 'The forms are not connected yet. Ask your supervisor.',
+    verify: 'Check that the number on the unit label matches: '
+  };
+  var DATA = window.PPM_DATA, CFG = window.PPM_CONFIG;
+  var app = document.getElementById('app');
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // Suggested visit type from the month rules, M is always due.
+  function visitTypeFor(monthIndex) {
+    var r = DATA.rules[monthIndex];
+    if (r.Y) return 3;
+    if (r.S) return 2;
+    if (r.Q) return 1;
+    return 0;
+  }
+
+  function plannedDay(id, now) {
+    var list = (DATA.schedule[id] || []);
+    var prefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-';
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].indexOf(prefix) === 0) {
+        var d = new Date(list[i] + 'T00:00:00');
+        return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    }
+    return null;
+  }
+
+  function formUrl(formKey, id, visitIndex) {
+    var f = CFG.forms[formKey];
+    if (!f || !f.publishedUrl || !f.assetEntry) return null;
+    var url = f.publishedUrl + (f.publishedUrl.indexOf('?') === -1 ? '?' : '&') + 'usp=pp_url&' +
+      encodeURIComponent(f.assetEntry) + '=' + encodeURIComponent(id);
+    if (visitIndex !== null && f.visitEntry) {
+      url += '&' + encodeURIComponent(f.visitEntry) + '=' + encodeURIComponent(CFG.visitTypes[visitIndex]);
+    }
+    return url;
+  }
+
+  function showNotFound() {
+    app.className = 'card error';
+    app.textContent = '';
+    app.appendChild(el('h1', '', T.notFoundTitle));
+    app.appendChild(el('p', 'sub', T.notFoundBody));
+  }
+
+  function render() {
+    var id = (new URLSearchParams(window.location.search).get('id') || '').trim();
+    var asset = Object.prototype.hasOwnProperty.call(DATA.assets, id) ? DATA.assets[id] : null;
+    if (!asset) { showNotFound(); return; }
+
+    var now = new Date();
+    var suggested = visitTypeFor(now.getMonth());
+    var formKey = asset.type === 'Package Unit' ? 'package' : 'split';
+
+    app.textContent = '';
+    app.appendChild(el('h1', '', asset.name));
+    app.appendChild(el('p', 'sub', T.verify + id));
+
+    var dl = el('dl');
+    function row(k, v) { if (!v) return; dl.appendChild(el('dt', '', k)); dl.appendChild(el('dd', '', v)); }
+    row(T.type, asset.type);
+    row(T.model, asset.model);
+    row(T.location, asset.loc);
+    row(T.room, asset.room);
+    var day = plannedDay(id, now);
+    row(T.planned, day || T.noPlan);
+    dl.appendChild(el('dt', '', T.due));
+    var dd = el('dd'); dd.appendChild(el('span', 'chip', CFG.visitTypes[suggested])); dl.appendChild(dd);
+    app.appendChild(dl);
+
+    var label = el('label', '', T.visitLabel); label.setAttribute('for', 'visit');
+    var select = el('select'); select.id = 'visit';
+    CFG.visitTypes.forEach(function (v, i) {
+      var o = el('option', '', v); o.value = String(i); if (i === suggested) o.selected = true; select.appendChild(o);
+    });
+    app.appendChild(label); app.appendChild(select);
+    app.appendChild(el('p', 'hint', T.visitHint));
+
+    var start = el('a', 'btn primary', T.start); start.id = 'start';
+    var fault = el('a', 'btn secondary', T.fault); fault.id = 'fault';
+    function update() {
+      var u = formUrl(formKey, id, parseInt(select.value, 10));
+      if (u) { start.href = u; start.removeAttribute('aria-disabled'); }
+      else { start.removeAttribute('href'); start.setAttribute('aria-disabled', 'true'); }
+    }
+    select.addEventListener('change', update);
+    update();
+    var fu = formUrl('corrective', id, null);
+    if (fu) fault.href = fu; else { fault.removeAttribute('href'); fault.setAttribute('aria-disabled', 'true'); }
+    app.appendChild(start); app.appendChild(fault);
+    if (!formUrl(formKey, id, 0)) app.appendChild(el('p', 'note', T.notConnected));
+    document.title = asset.name;
+  }
+  render();
+})();
+</script>
+</body>
+</html>
