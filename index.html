@@ -55,6 +55,8 @@
   var T = {
     notFoundTitle: 'Unit not found',
     notFoundBody: 'Check that you scanned the label on the unit. If the problem continues, tell your supervisor.',
+    noIdTitle: 'Scan a unit label',
+    noIdBody: 'Open this page by scanning the QR label on a unit.',
     unit: 'Unit', type: 'Type', location: 'Location', model: 'Model', room: 'Room',
     thisMonth: 'This month', planned: 'Planned day', due: 'Checklists due',
     noPlan: 'No visit is planned for this month',
@@ -107,17 +109,18 @@
     return url;
   }
 
-  function showNotFound() {
+  function showNotFound(noId) {
     app.className = 'card error';
     app.textContent = '';
-    app.appendChild(el('h1', '', T.notFoundTitle));
-    app.appendChild(el('p', 'sub', T.notFoundBody));
+    app.appendChild(el('h1', '', noId ? T.noIdTitle : T.notFoundTitle));
+    app.appendChild(el('p', 'sub', noId ? T.noIdBody : T.notFoundBody));
   }
 
   function render() {
     var id = (new URLSearchParams(window.location.search).get('id') || '').trim();
+    if (!id) { showNotFound(true); return; }
     var asset = Object.prototype.hasOwnProperty.call(DATA.assets, id) ? DATA.assets[id] : null;
-    if (!asset) { showNotFound(); return; }
+    if (!asset) { showNotFound(false); return; }
 
     var now = new Date();
     var suggested = visitTypeFor(now.getMonth());
