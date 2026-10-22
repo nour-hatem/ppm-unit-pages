@@ -7,6 +7,6 @@ window.PPM_CONFIG = {
     corrective: { publishedUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeTQptwFeOZ2ZHsCR-c2Nj9pPtlWOH3iixv0tIiMlz0Ox4mKg/viewform", assetEntry: "entry.1621648318" }
   },
   visitTypes: ["M only", "M + Q", "M + Q + S", "M + Q + S + Y"],
-  statusUrl: "",
+  statusUrl: "https://script.google.com/macros/s/AKfycbx1-202FQzPjnJOpEAdi2mHJZAQMb8Hn6PgV-XoujGtyUVNO9sn7y2-xZ41GxMsw86V/exec",
   statusTimeoutMs: 12000
 };
