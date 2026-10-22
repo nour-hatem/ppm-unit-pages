@@ -6,5 +6,7 @@ window.PPM_CONFIG = {
     split: { publishedUrl: "https://docs.google.com/forms/d/e/1FAIpQLScle0XAibuFJ-W5KzhNgbzG4D_CQ-to1JDZjml5RlRhXPiZ6g/viewform", assetEntry: "entry.428586684", visitEntry: "entry.827297192" },
     corrective: { publishedUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeTQptwFeOZ2ZHsCR-c2Nj9pPtlWOH3iixv0tIiMlz0Ox4mKg/viewform", assetEntry: "entry.1621648318" }
   },
-  visitTypes: ["M only", "M + Q", "M + Q + S", "M + Q + S + Y"]
+  visitTypes: ["M only", "M + Q", "M + Q + S", "M + Q + S + Y"],
+  statusUrl: "",
+  statusTimeoutMs: 12000
 };

@@ -9,6 +9,7 @@
   :root {
     --bg: #EAF2FB; --card: #F7FAFE; --ink: #0B2545; --muted: #3D5A80; --line: #B8CDE6;
     --primary: #1F5FA8; --primary-ink: #EAF2FB; --soft: #D6E4F5; --soft-ink: #12335C;
+    --alert: #0B2545; --alert-bg: #9DB8D9;
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -17,6 +18,7 @@
     :root:not([data-theme="light"]) {
       --bg: #0B1F3A; --card: #102B4C; --ink: #D6E4F5; --muted: #9DB8D9; --line: #24456F;
       --primary: #4C8FD6; --primary-ink: #0B1F3A; --soft: #1B3A63; --soft-ink: #D6E4F5;
+      --alert: #D6E4F5; --alert-bg: #1F3A63;
     }
   }
   *, *::before, *::after { box-sizing: inherit; }
@@ -31,6 +33,7 @@
   dt { color: var(--muted); }
   dd { margin: 0; font-weight: 600; word-break: break-word; }
   .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--soft); color: var(--soft-ink); font-weight: 700; }
+  .chip.alert { background: var(--alert-bg); color: var(--alert); }
   label { display: block; margin: 14px 0 6px; font-size: 14px; color: var(--muted); }
   select { width: 100%; min-height: 48px; padding: 0 12px; font-size: 16px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
   .hint { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
@@ -40,6 +43,15 @@
   .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
   .note { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
   .error h1 { font-size: 20px; }
+  /* Status section */
+  #status-section { margin-top: 16px; }
+  #status-section h2 { margin: 0 0 12px; font-size: 17px; font-weight: 700; color: var(--ink); }
+  .status-row { display: flex; align-items: baseline; gap: 8px; margin: 6px 0; font-size: 15px; }
+  .status-label { color: var(--muted); font-size: 13px; min-width: 90px; flex-shrink: 0; }
+  .status-value { font-weight: 600; }
+  .late-list { margin: 6px 0 0; padding-left: 16px; font-size: 14px; color: var(--muted); }
+  .status-note { margin: 10px 0 0; font-size: 12px; color: var(--muted); text-align: right; }
+  .status-unavailable { font-size: 14px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -116,6 +128,195 @@
     app.appendChild(el('p', 'sub', noId ? T.noIdBody : T.notFoundBody));
   }
 
+  /* ---------- Status section ---------- */
+
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function fmtDate(iso) {
+    // iso is yyyy-MM-dd
+    var parts = iso ? iso.split('-') : [];
+    if (parts.length !== 3) return iso || '';
+    var y = parts[0], m = parseInt(parts[1], 10), d = parts[2];
+    return d + ' ' + (MONTHS[m - 1] || parts[1]) + ' ' + y;
+  }
+
+  function fmtMonth(key) {
+    // key is yyyy-MM
+    var parts = key ? key.split('-') : [];
+    if (parts.length !== 2) return key || '';
+    var m = parseInt(parts[1], 10);
+    return (MONTHS[m - 1] || parts[1]) + ' ' + parts[0];
+  }
+
+  function safeStr(v) {
+    if (typeof v !== 'string') return '';
+    return v;
+  }
+
+  function validShape(d) {
+    if (!d || typeof d !== 'object' || d.ok !== true) return false;
+    if (typeof d.month !== 'string') return false;
+    if (!d.maintenance || typeof d.maintenance !== 'object') return false;
+    if (typeof d.maintenance.state !== 'string') return false;
+    return true;
+  }
+
+  function renderStatus(container, d, select) {
+    if (!validShape(d)) {
+      container.appendChild(el('p', 'status-unavailable', 'The latest status is not available now. You can still start the visit.'));
+      return;
+    }
+
+    var section = el('div', '');
+    var h2 = el('h2', '', 'Unit status');
+    section.appendChild(h2);
+
+    var mnt = d.maintenance;
+    var state = safeStr(mnt.state);
+    var monthLabel = fmtMonth(safeStr(d.month));
+
+    // This month row
+    var thisMonthRow = el('div', 'status-row');
+    thisMonthRow.appendChild(el('span', 'status-label', 'This month (' + monthLabel + ')'));
+
+    var stateText = '';
+    var alertChip = false;
+    var visitThis = mnt.visitThisMonth;
+
+    if (state === 'done') {
+      if (mnt.overridden && (!visitThis)) {
+        stateText = 'Done marked by the supervisor';
+      } else if (visitThis && safeStr(visitThis.date) && safeStr(visitThis.type)) {
+        stateText = 'Done ' + fmtDate(safeStr(visitThis.date)) + ', ' + safeStr(visitThis.type);
+      } else {
+        stateText = 'Done';
+      }
+    } else if (state === 'not_done') {
+      var planned = safeStr(mnt.planned);
+      stateText = 'Not done yet' + (planned ? ', planned ' + fmtDate(planned) : '');
+    } else if (state === 'overdue') {
+      var planned2 = safeStr(mnt.planned);
+      stateText = 'Overdue' + (planned2 ? ', planned day was ' + fmtDate(planned2) : '');
+      alertChip = true;
+    } else if (state === 'skipped') {
+      stateText = 'Skipped by the supervisor';
+    } else if (state === 'moved') {
+      stateText = 'Moved by the supervisor';
+    } else if (state === 'no_plan') {
+      stateText = 'No visit is planned for this month';
+    } else {
+      stateText = safeStr(state);
+    }
+
+    var chip = el('span', alertChip ? 'chip alert' : 'chip', stateText);
+    thisMonthRow.appendChild(chip);
+    section.appendChild(thisMonthRow);
+
+    // Update checklists-due chip and selector default from server, unless user already changed it
+    if (typeof mnt.due === 'string' && mnt.due && select && !select._userChanged) {
+      var dueLower = mnt.due.toLowerCase();
+      var visitTypes = CFG.visitTypes || [];
+      for (var vi = 0; vi < visitTypes.length; vi++) {
+        if (visitTypes[vi].toLowerCase() === dueLower) {
+          if (select.value !== String(vi)) {
+            select.value = String(vi);
+            select.dispatchEvent(new Event('change'));
+          }
+          // Update the chip in the dl
+          var dueChip = document.querySelector('dd .chip');
+          if (dueChip) dueChip.textContent = visitTypes[vi];
+          break;
+        }
+      }
+    }
+
+    // Last visit row
+    var lvRow = el('div', 'status-row');
+    lvRow.appendChild(el('span', 'status-label', 'Last visit'));
+    var lv = d.lastVisit;
+    var lvText = (lv && safeStr(lv.date) && safeStr(lv.type))
+      ? fmtDate(safeStr(lv.date)) + ', ' + safeStr(lv.type)
+      : 'No visit recorded yet';
+    lvRow.appendChild(el('span', 'status-value', lvText));
+    section.appendChild(lvRow);
+
+    // Late months
+    if (Array.isArray(d.lateMonths) && d.lateMonths.length > 0) {
+      var lmRow = el('div', 'status-row');
+      lmRow.appendChild(el('span', 'status-label', 'Not completed'));
+      var lmSpan = el('span', 'status-value', d.lateMonths.map(function (m) { return fmtMonth(safeStr(m)); }).join(', '));
+      lmRow.appendChild(lmSpan);
+      section.appendChild(lmRow);
+    }
+
+    // Fault/repair
+    var faultRow = el('div', 'status-row');
+    faultRow.appendChild(el('span', 'status-label', 'Repairs'));
+    if (d.fault && safeStr(d.fault.date) && safeStr(d.fault.type)) {
+      var isOpen = d.fault.open === true;
+      var fChip = el('span', isOpen ? 'chip alert' : 'chip', isOpen ? 'Open issue' : 'Resolved');
+      faultRow.appendChild(fChip);
+      var fDetail = el('span', 'status-value', '');
+      fDetail.textContent = ' ' + safeStr(d.fault.type) + ', ' + fmtDate(safeStr(d.fault.date)) + '. ' + safeStr(d.fault.status);
+      faultRow.appendChild(fDetail);
+    } else {
+      faultRow.appendChild(el('span', 'status-value', 'No fault reports'));
+    }
+    section.appendChild(faultRow);
+
+    // Checked at
+    if (typeof d.generatedAt === 'string') {
+      try {
+        var genDate = new Date(d.generatedAt);
+        var hh = String(genDate.getHours()).padStart(2, '0');
+        var mm = String(genDate.getMinutes()).padStart(2, '0');
+        var noteP = el('p', 'status-note', 'Checked at ' + hh + ':' + mm);
+        section.appendChild(noteP);
+      } catch (e) { /* ignore */ }
+    }
+
+    container.appendChild(section);
+  }
+
+  function loadStatus(id, container, select) {
+    var statusUrl = CFG.statusUrl;
+    if (!statusUrl) return; // no status configured, section hidden
+
+    var cbName = 'ppmStatus' + Date.now();
+    var timer = null;
+    var script = null;
+
+    function cleanup() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (script && script.parentNode) script.parentNode.removeChild(script);
+      script = null;
+      try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+    }
+
+    function onResult(d) {
+      cleanup();
+      container.textContent = '';
+      renderStatus(container, d, select);
+    }
+
+    function onFail() {
+      cleanup();
+      container.textContent = '';
+      container.appendChild(el('p', 'status-unavailable', 'The latest status is not available now. You can still start the visit.'));
+    }
+
+    window[cbName] = function (d) { onResult(d); };
+
+    var timeout = (typeof CFG.statusTimeoutMs === 'number' && CFG.statusTimeoutMs > 0)
+      ? CFG.statusTimeoutMs : 12000;
+    timer = setTimeout(onFail, timeout);
+
+    script = document.createElement('script');
+    script.src = statusUrl + '?id=' + encodeURIComponent(id) + '&callback=' + encodeURIComponent(cbName);
+    script.onerror = onFail;
+    document.head.appendChild(script);
+  }
+
   function render() {
     var id = (new URLSearchParams(window.location.search).get('id') || '').trim();
     if (!id) { showNotFound(true); return; }
@@ -144,9 +345,11 @@
 
     var label = el('label', '', T.visitLabel); label.setAttribute('for', 'visit');
     var select = el('select'); select.id = 'visit';
+    select._userChanged = false;
     CFG.visitTypes.forEach(function (v, i) {
       var o = el('option', '', v); o.value = String(i); if (i === suggested) o.selected = true; select.appendChild(o);
     });
+    select.addEventListener('change', function () { select._userChanged = true; update(); });
     app.appendChild(label); app.appendChild(select);
     app.appendChild(el('p', 'hint', T.visitHint));
 
@@ -157,13 +360,22 @@
       if (u) { start.href = u; start.removeAttribute('aria-disabled'); }
       else { start.removeAttribute('href'); start.setAttribute('aria-disabled', 'true'); }
     }
-    select.addEventListener('change', update);
     update();
     var fu = formUrl('corrective', id, null);
     if (fu) fault.href = fu; else { fault.removeAttribute('href'); fault.setAttribute('aria-disabled', 'true'); }
     app.appendChild(start); app.appendChild(fault);
     if (!formUrl(formKey, id, 0)) app.appendChild(el('p', 'note', T.notConnected));
     document.title = asset.name;
+
+    // Status section
+    if (CFG.statusUrl) {
+      var statusSection = el('div', 'card', '');
+      statusSection.id = 'status-section';
+      statusSection.appendChild(el('p', 'sub', 'Loading status...'));
+      var mainEl = document.querySelector('main');
+      mainEl.appendChild(statusSection);
+      loadStatus(id, statusSection, select);
+    }
   }
   render();
 })();
