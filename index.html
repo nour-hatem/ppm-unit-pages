@@ -185,15 +185,17 @@
 
     if (state === 'done') {
       if (mnt.overridden && (!visitThis)) {
-        stateText = 'Done marked by the supervisor';
+        stateText = 'Maintenance Completed (marked by supervisor)';
       } else if (visitThis && safeStr(visitThis.date) && safeStr(visitThis.type)) {
-        stateText = 'Done ' + fmtDate(safeStr(visitThis.date)) + ', ' + safeStr(visitThis.type);
+        stateText = 'Maintenance Completed ' + fmtDate(safeStr(visitThis.date)) + ', ' + safeStr(visitThis.type);
       } else {
-        stateText = 'Done';
+        stateText = 'Maintenance Completed';
       }
     } else if (state === 'not_done') {
       var planned = safeStr(mnt.planned);
-      stateText = 'Not done yet' + (planned ? ', planned ' + fmtDate(planned) : '');
+      // Default state: unit has no maintenance record for the current period.
+      // The status resets automatically at the start of each new period.
+      stateText = 'Not Maintained' + (planned ? ', planned ' + fmtDate(planned) : '');
     } else if (state === 'overdue') {
       var planned2 = safeStr(mnt.planned);
       stateText = 'Overdue' + (planned2 ? ', planned day was ' + fmtDate(planned2) : '');
