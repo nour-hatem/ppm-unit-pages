@@ -7,58 +7,482 @@
 <title>Unit maintenance</title>
 <style>
   :root {
-    --bg: #EAF2FB; --card: #F7FAFE; --ink: #0B2545; --muted: #3D5A80; --line: #B8CDE6;
-    --primary: #1F5FA8; --primary-ink: #EAF2FB; --soft: #D6E4F5; --soft-ink: #12335C;
-    --alert: #0B2545; --alert-bg: #9DB8D9;
+    /* NHC Official Brand Identity Palette (from https://nhc.sa/identity/) */
+    --nhc-national-green: #0B4332; /* National Green (R11 G67 B50) - Institutional, Authoritative */
+    --nhc-leaf-green: #009C6D;     /* Leaf Green (R0 G156 B109) - Energy, Primary Active */
+    --nhc-mint-green: #BCFFBB;     /* Mint Green (R188 G255 B187) - Highlight, Fresh Accent */
+    --nhc-arfaj-yellow: #FFF1B1;   /* Arfaj Yellow (R255 G241 B177) - Desert Floral Tone */
+    --nhc-sun-orange: #FFE2C1;     /* Sun Orange (R255 G226 B193) - Warm Tone */
+    --nhc-water-blue: #DCEEF8;     /* Water Blue (R220 G238 B248) - Sky & Stream Tone */
+
+    /* Light Theme Design Tokens */
+    --bg: #F4F7F5;                 /* Architectural subtle off-white */
+    --card: #FFFFFF;               /* Clean white surface */
+    --ink: #1D1D1F;                /* High-contrast neutral ink */
+    --muted: #567B6E;              /* Sophisticated sage-tinted muted text */
+    --line: rgba(11, 67, 50, 0.14); /* Refined national green border */
+    --focus-ring: rgba(0, 156, 109, 0.35);
+
+    /* Primary CTA (NHC National Green with Mint Accent) */
+    --primary: #0B4332;
+    --primary-ink: #BCFFBB;
+    --primary-hover: #009C6D;
+    --primary-hover-ink: #FFFFFF;
+
+    /* Secondary CTA */
+    --secondary-border: #0B4332;
+    --secondary-ink: #0B4332;
+    --secondary-hover-bg: rgba(11, 67, 50, 0.05);
+
+    /* Neutral soft chips (e.g. Checklists due) */
+    --soft: #DCEEF8;
+    --soft-ink: #0B4332;
+
+    /* Semantic Status Chips - Readable contrast & clear distinction */
+    --status-done-bg: #BCFFBB;
+    --status-done-ink: #0B4332;
+    --status-done-border: #009C6D;
+
+    --status-pending-bg: #DCEEF8;
+    --status-pending-ink: #0A3A40;
+    --status-pending-border: #B5D7ED;
+
+    --status-overdue-bg: #FEE2E2;
+    --status-overdue-ink: #8B1515;
+    --status-overdue-border: #FCA5A5;
+
+    --status-admin-bg: #EDEFEF;
+    --status-admin-ink: #374151;
+    --status-admin-border: #D1D5DB;
+
+    --status-fault-open-bg: #FFF1B1;
+    --status-fault-open-ink: #683500;
+    --status-fault-open-border: #E8D46D;
+
+    --status-fault-res-bg: #BCFFBB;
+    --status-fault-res-ink: #0B4332;
+    --status-fault-res-border: #009C6D;
+
+    /* Generic alert token for backward-compatible .chip.alert */
+    --alert: #8B1515;
+    --alert-bg: #FEE2E2;
+
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0B1F3A; --card: #102B4C; --ink: #D6E4F5; --muted: #9DB8D9; --line: #24456F;
-      --primary: #4C8FD6; --primary-ink: #0B1F3A; --soft: #1B3A63; --soft-ink: #D6E4F5;
-      --alert: #D6E4F5; --alert-bg: #1F3A63;
+      --bg: #072118;               /* Deep National Green Night */
+      --card: #0D2E23;             /* Elevated dark emerald card */
+      --ink: #F4F7F5;              /* Clean off-white ink */
+      --muted: #9CCDB3;            /* Soft sage muted text */
+      --line: rgba(188, 255, 187, 0.16);
+      --focus-ring: rgba(188, 255, 187, 0.45);
+
+      --primary: #009C6D;          /* Leaf Green pops on dark */
+      --primary-ink: #FFFFFF;
+      --primary-hover: #0B4332;
+      --primary-hover-ink: #BCFFBB;
+
+      --secondary-border: #BCFFBB;
+      --secondary-ink: #BCFFBB;
+      --secondary-hover-bg: rgba(188, 255, 187, 0.12);
+
+      --soft: rgba(220, 238, 248, 0.15);
+      --soft-ink: #DCEEF8;
+
+      --status-done-bg: rgba(0, 156, 109, 0.28);
+      --status-done-ink: #BCFFBB;
+      --status-done-border: rgba(188, 255, 187, 0.35);
+
+      --status-pending-bg: rgba(220, 238, 248, 0.16);
+      --status-pending-ink: #DCEEF8;
+      --status-pending-border: rgba(220, 238, 248, 0.3);
+
+      --status-overdue-bg: rgba(239, 68, 68, 0.22);
+      --status-overdue-ink: #FECACA;
+      --status-overdue-border: rgba(248, 113, 113, 0.4);
+
+      --status-admin-bg: rgba(255, 255, 255, 0.08);
+      --status-admin-ink: #D1D5DB;
+      --status-admin-border: rgba(255, 255, 255, 0.15);
+
+      --status-fault-open-bg: rgba(245, 158, 11, 0.22);
+      --status-fault-open-ink: #FDE68A;
+      --status-fault-open-border: rgba(251, 191, 36, 0.4);
+
+      --status-fault-res-bg: rgba(0, 156, 109, 0.28);
+      --status-fault-res-ink: #BCFFBB;
+      --status-fault-res-border: rgba(188, 255, 187, 0.35);
+
+      --alert: #FECACA;
+      --alert-bg: rgba(239, 68, 68, 0.22);
     }
   }
+
   *, *::before, *::after { box-sizing: inherit; }
   html, body { margin: 0; }
-  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.45; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: NHC, "Basis Grotesque Arabic Pro", "Basis Grotesque Pro", "Noto Sans Arabic", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* NHC Header Bar */
+  .nhc-header {
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  }
+  .nhc-header-inner {
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .nhc-brand-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .nhc-logo {
+    width: 64px;
+    height: 32px;
+    color: var(--nhc-national-green);
+    flex-shrink: 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .nhc-logo {
+      color: var(--nhc-mint-green);
+    }
+  }
+  .nhc-brand-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--line);
+  }
+  .nhc-brand-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+  .nhc-brand-entity {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--nhc-national-green);
+    letter-spacing: -0.01em;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .nhc-brand-entity {
+      color: var(--nhc-mint-green);
+    }
+  }
+  .nhc-brand-program {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+  .nhc-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--nhc-mint-green);
+    color: var(--nhc-national-green);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .nhc-badge {
+      background: rgba(188, 255, 187, 0.18);
+      color: var(--nhc-mint-green);
+      border: 1px solid rgba(188, 255, 187, 0.3);
+    }
+  }
+
   main { max-width: 520px; margin: 0 auto; padding: 20px 16px 32px; }
-  .brand { margin: 0 0 14px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
-  h1 { margin: 0 0 4px; font-size: 22px; }
-  .sub { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
-  dl { margin: 0 0 16px; display: grid; grid-template-columns: 110px 1fr; gap: 8px 10px; font-size: 15px; }
-  dt { color: var(--muted); }
-  dd { margin: 0; font-weight: 600; word-break: break-word; }
-  .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--soft); color: var(--soft-ink); font-weight: 700; }
-  .chip.alert { background: var(--alert-bg); color: var(--alert); }
-  label { display: block; margin: 14px 0 6px; font-size: 14px; color: var(--muted); }
-  select { width: 100%; min-height: 48px; padding: 0 12px; font-size: 16px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  .brand {
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .brand::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--nhc-leaf-green);
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 20px 18px;
+    box-shadow: 0 2px 12px rgba(11, 67, 50, 0.04);
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--nhc-national-green);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) h1 {
+      color: #FFFFFF;
+    }
+  }
+  .sub { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+  dl {
+    margin: 0 0 18px;
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 9px 12px;
+    font-size: 14.5px;
+    background: rgba(11, 67, 50, 0.02);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) dl {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
+  dt { color: var(--muted); font-weight: 500; }
+  dd { margin: 0; font-weight: 600; word-break: break-word; color: var(--ink); }
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--soft);
+    color: var(--soft-ink);
+    border: 1px solid rgba(11, 67, 50, 0.15);
+    letter-spacing: 0.01em;
+  }
+  .chip.alert {
+    background: var(--alert-bg);
+    color: var(--alert);
+    border-color: var(--status-overdue-border);
+  }
+
+  /* Specific semantic status classes matching NHC palette */
+  .chip.status-done {
+    background: var(--status-done-bg);
+    color: var(--status-done-ink);
+    border: 1px solid var(--status-done-border);
+  }
+  .chip.status-not-done {
+    background: var(--status-pending-bg);
+    color: var(--status-pending-ink);
+    border: 1px solid var(--status-pending-border);
+  }
+  .chip.status-overdue {
+    background: var(--status-overdue-bg);
+    color: var(--status-overdue-ink);
+    border: 1px solid var(--status-overdue-border);
+  }
+  .chip.status-skipped,
+  .chip.status-moved,
+  .chip.status-no-plan {
+    background: var(--status-admin-bg);
+    color: var(--status-admin-ink);
+    border: 1px solid var(--status-admin-border);
+  }
+  .chip.status-fault-open {
+    background: var(--status-fault-open-bg);
+    color: var(--status-fault-open-ink);
+    border: 1px solid var(--status-fault-open-border);
+  }
+  .chip.status-fault-resolved {
+    background: var(--status-fault-res-bg);
+    color: var(--status-fault-res-ink);
+    border: 1px solid var(--status-fault-res-border);
+  }
+
+  label {
+    display: block;
+    margin: 16px 0 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  select:focus {
+    border-color: var(--nhc-leaf-green);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
   .hint { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
-  .btn { display: block; width: 100%; min-height: 52px; margin-top: 12px; padding: 14px 16px; text-align: center; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 12px; border: 2px solid var(--primary); }
-  .btn.primary { background: var(--primary); color: var(--primary-ink); }
-  .btn.secondary { background: transparent; color: var(--primary); }
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 50px;
+    margin-top: 12px;
+    padding: 12px 18px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s linear, color 0.2s linear, border-color 0.2s linear, box-shadow 0.2s ease;
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: var(--primary-ink);
+    border: 1px solid var(--primary);
+    box-shadow: 0 2px 6px rgba(11, 67, 50, 0.15);
+  }
+  .btn.primary:hover {
+    background: var(--primary-hover);
+    color: var(--primary-hover-ink);
+    border-color: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(0, 156, 109, 0.25);
+  }
+  .btn.secondary {
+    background: transparent;
+    color: var(--secondary-ink);
+    border: 1.5px solid var(--secondary-border);
+  }
+  .btn.secondary:hover {
+    background: var(--secondary-hover-bg);
+    border-color: var(--nhc-leaf-green);
+    color: var(--nhc-leaf-green);
+  }
   .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
   .note { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
   .error h1 { font-size: 20px; }
+
   /* Status section */
-  #status-section { margin-top: 16px; }
-  #status-section h2 { margin: 0 0 12px; font-size: 17px; font-weight: 700; color: var(--ink); }
-  .status-row { display: flex; align-items: baseline; gap: 8px; margin: 6px 0; font-size: 15px; }
-  .status-label { color: var(--muted); font-size: 13px; min-width: 90px; flex-shrink: 0; }
-  .status-value { font-weight: 600; }
-  .late-list { margin: 6px 0 0; padding-left: 16px; font-size: 14px; color: var(--muted); }
-  .status-note { margin: 10px 0 0; font-size: 12px; color: var(--muted); text-align: right; }
+  #status-section {
+    margin-top: 18px;
+  }
+  #status-section h2 {
+    margin: 0 0 14px;
+    font-size: 16.5px;
+    font-weight: 700;
+    color: var(--nhc-national-green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) #status-section h2 {
+      color: var(--nhc-mint-green);
+    }
+  }
+  #status-section h2::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--nhc-leaf-green);
+  }
+  .status-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 8px 0;
+    font-size: 14.5px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed rgba(11, 67, 50, 0.08);
+  }
+  .status-row:last-of-type {
+    border-bottom: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .status-row {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+  .status-label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 95px;
+    flex-shrink: 0;
+  }
+  .status-value {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .late-list {
+    margin: 6px 0 0;
+    padding-left: 16px;
+    font-size: 13.5px;
+    color: var(--status-overdue-ink);
+  }
+  .status-note {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+  }
   .status-unavailable { font-size: 14px; color: var(--muted); }
+
+  /* NHC Footer */
+  .nhc-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--muted);
+  }
 </style>
 </head>
 <body>
+<header class="nhc-header">
+  <div class="nhc-header-inner">
+    <div class="nhc-brand-group">
+      <svg class="nhc-logo" width="64" height="32" viewBox="0 0 80 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-label="NHC National Housing Company" role="img"><path d="M59.354 20.872v4.134h-1.96v-10h1.96v4.12h6.079v-4.12h1.961v10h-1.967v-4.134h-6.073ZM52.264 15.007v6.518l-6.272-5.85a2.5 2.5 0 0 0-1.7-.668h-1.383l1.382 1.249v8.75h1.962v-6.383l6.924 6.383h1.047v-10h-1.962.002ZM79.041 22.294c-.823.636-1.922 1.029-3.244 1.03-2.263.006-3.719-1.372-3.719-3.332 0-1.96 1.456-3.327 3.73-3.327 1.268 0 2.408.375 3.226 1.027l.952-1.544c-1.103-.82-2.554-1.293-4.232-1.293-3.417 0-5.674 2.116-5.674 5.137 0 3.02 2.268 5.164 5.685 5.164 1.815 0 3.073-.421 4.233-1.31l-.957-1.554v.002ZM27.272 16.702a5.55 5.55 0 0 1 6.569-3.685 7.339 7.339 0 0 0-2.142 3.248l-1.193 3.672a5.642 5.642 0 0 1-6.729 3.731 4.396 4.396 0 0 0 2.04-2.485l1.455-4.483v.002ZM37.265 31.345l-2.96-5.127a4.189 4.189 0 0 0-5.32-1.737c.917.476 1.364.86 1.923 1.827l2.275 3.945a2.988 2.988 0 0 0 4.082 1.094M35.728 25.85a3.192 3.192 0 0 0 3.356 3.02 3.192 3.192 0 0 0-3.356-3.02ZM32.186 19.886a5.464 5.464 0 0 0 5.909-4.978 5.464 5.464 0 0 0-5.91 4.978ZM30.647 22.611a7.401 7.401 0 0 1 2.464.62l3.745 1.667a2.38 2.38 0 0 0 3.142-1.207l-4.934-2.197a3.686 3.686 0 0 0-4.417 1.115M20.004 12.197a5.552 5.552 0 0 1-1.475-7.386 7.304 7.304 0 0 0 2.429 3.04l3.124 2.27a5.644 5.644 0 0 1 1.47 7.554 4.39 4.39 0 0 0-1.732-2.707l-3.814-2.77h-.002ZM37.018 7.22l-5.791 1.23a4.188 4.188 0 0 0-3.296 4.523c.735-.725 1.241-1.031 2.332-1.264l4.453-.946a2.987 2.987 0 0 0 2.302-3.543ZM31.317 6.982a3.194 3.194 0 0 0 3.91-2.257 3.193 3.193 0 0 0-3.91 2.257ZM24.551 8.509a5.463 5.463 0 0 0-2.91-7.159 5.463 5.463 0 0 0 2.91 7.159ZM26.668 10.814c.323-.79.78-1.518 1.352-2.152l2.744-3.047a2.38 2.38 0 0 0-.177-3.361l-3.614 4.015a3.683 3.683 0 0 0-.303 4.545M13.475 17.719a5.55 5.55 0 0 1-7.48-.88 7.333 7.333 0 0 0 3.641-1.37l3.125-2.27a5.644 5.644 0 0 1 7.638.937 4.401 4.401 0 0 0-3.11.81l-3.814 2.773ZM13.998 0l-.618 5.888a4.187 4.187 0 0 0 3.281 4.531c-.461-.923-.597-1.498-.48-2.608l.475-4.528A2.988 2.988 0 0 0 13.996 0M12.01 5.349a3.193 3.193 0 0 0-.939-4.417 3.193 3.193 0 0 0 .94 4.417ZM11.37 12.255a5.462 5.462 0 0 0-7.706.556 5.462 5.462 0 0 0 7.707-.556ZM14.219 10.955a7.43 7.43 0 0 1-1.629-1.95l-2.05-3.55a2.38 2.38 0 0 0-3.25-.871l2.7 4.679a3.684 3.684 0 0 0 4.23 1.694M16.707 25.635a5.551 5.551 0 0 1-3.148 6.843 7.314 7.314 0 0 0-.178-3.886l-1.193-3.672a5.642 5.642 0 0 1 3.25-6.974 4.403 4.403 0 0 0-.19 3.21l1.457 4.483.002-.004ZM.018 19.663l5.408 2.407a4.187 4.187 0 0 0 5.324-1.72c-1.02.155-1.609.106-2.629-.35l-4.16-1.851a2.987 2.987 0 0 0-3.943 1.514ZM4.49 23.205A3.193 3.193 0 0 0 0 22.733a3.195 3.195 0 0 0 4.49.472ZM10.861 25.947a5.465 5.465 0 0 0-1.854 7.502 5.465 5.465 0 0 0 1.854-7.502ZM10.504 22.838a7.41 7.41 0 0 1-2.358.947l-4.012.853a2.38 2.38 0 0 0-1.832 2.823l5.283-1.123a3.684 3.684 0 0 0 2.917-3.498M25.235 25.006a5.554 5.554 0 0 1 5.536 5.107 7.34 7.34 0 0 0-3.752-1.032h-3.862a5.643 5.643 0 0 1-5.629-5.247 4.4 4.4 0 0 0 2.993 1.172h4.714ZM14.396 39.034l3.962-4.4a4.189 4.189 0 0 0 .009-5.596c-.17 1.019-.396 1.563-1.144 2.393l-3.047 3.384a2.987 2.987 0 0 0 .22 4.22ZM19.148 35.874a3.191 3.191 0 0 0-1.836 4.124 3.19 3.19 0 0 0 1.836-4.124ZM23.725 30.663a5.464 5.464 0 0 0 6.56 4.082 5.465 5.465 0 0 0-6.56-4.082ZM20.658 30.043c.203.828.261 1.686.171 2.534l-.428 4.078a2.38 2.38 0 0 0 2.118 2.615l.564-5.371a3.684 3.684 0 0 0-2.427-3.856"></path></svg>
+      <div class="nhc-brand-divider"></div>
+      <div class="nhc-brand-meta">
+        <span class="nhc-brand-entity">National Housing Company</span>
+        <span class="nhc-brand-program">Al-Fursan PPM · Facility Management</span>
+      </div>
+    </div>
+    <span class="nhc-badge">NHC PPM</span>
+  </div>
+</header>
 <main>
-  <p class="brand">Al-Fursan maintenance</p>
+  <p class="brand">Al-Fursan Maintenance</p>
   <div id="app" class="card" aria-live="polite"><p class="sub">Loading</p></div>
 </main>
+<footer class="nhc-footer">
+  <p>© NHC · National Housing Company · All Rights Reserved</p>
+</footer>
 <script src="data.js"></script>
 <script src="config.js"></script>
 <script>
@@ -180,10 +604,11 @@
     thisMonthRow.appendChild(el('span', 'status-label', 'This month (' + monthLabel + ')'));
 
     var stateText = '';
-    var alertChip = false;
+    var chipClass = 'chip';
     var visitThis = mnt.visitThisMonth;
 
     if (state === 'done') {
+      chipClass = 'chip status-done';
       if (mnt.overridden && (!visitThis)) {
         stateText = 'Maintenance Completed (marked by supervisor)';
       } else if (visitThis && safeStr(visitThis.date) && safeStr(visitThis.type)) {
@@ -192,25 +617,30 @@
         stateText = 'Maintenance Completed';
       }
     } else if (state === 'not_done') {
+      chipClass = 'chip status-not-done';
       var planned = safeStr(mnt.planned);
       // Default state: unit has no maintenance record for the current period.
       // The status resets automatically at the start of each new period.
       stateText = 'Not Maintained' + (planned ? ', planned ' + fmtDate(planned) : '');
     } else if (state === 'overdue') {
+      chipClass = 'chip alert status-overdue';
       var planned2 = safeStr(mnt.planned);
       stateText = 'Overdue' + (planned2 ? ', planned day was ' + fmtDate(planned2) : '');
-      alertChip = true;
     } else if (state === 'skipped') {
+      chipClass = 'chip status-skipped';
       stateText = 'Skipped by the supervisor';
     } else if (state === 'moved') {
+      chipClass = 'chip status-moved';
       stateText = 'Moved by the supervisor';
     } else if (state === 'no_plan') {
+      chipClass = 'chip status-no-plan';
       stateText = 'No visit is planned for this month';
     } else {
+      chipClass = 'chip';
       stateText = safeStr(state);
     }
 
-    var chip = el('span', alertChip ? 'chip alert' : 'chip', stateText);
+    var chip = el('span', chipClass, stateText);
     thisMonthRow.appendChild(chip);
     section.appendChild(thisMonthRow);
 
@@ -256,7 +686,7 @@
     faultRow.appendChild(el('span', 'status-label', 'Repairs'));
     if (d.fault && safeStr(d.fault.date) && safeStr(d.fault.type)) {
       var isOpen = d.fault.open === true;
-      var fChip = el('span', isOpen ? 'chip alert' : 'chip', isOpen ? 'Open issue' : 'Resolved');
+      var fChip = el('span', isOpen ? 'chip alert status-fault-open' : 'chip status-fault-resolved', isOpen ? 'Open issue' : 'Resolved');
       faultRow.appendChild(fChip);
       var fDetail = el('span', 'status-value', '');
       fDetail.textContent = ' ' + safeStr(d.fault.type) + ', ' + fmtDate(safeStr(d.fault.date)) + '. ' + safeStr(d.fault.status);
